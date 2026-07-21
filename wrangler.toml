@@ -1,0 +1,8 @@
+name = "image-background-remover"
+compatibility_date = "2025-07-21"
+
+[env.production]
+vars = { REMOVEBG_API_KEY = "" }
+
+[[env.production.placement]]
+mode = "smart"
