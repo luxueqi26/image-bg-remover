@@ -1,8 +1,11 @@
-name = "image-background-remover"
+name = "image-bg-remover"
 compatibility_date = "2025-07-21"
+compatibility_flags = ["nodejs_compat"]
+main = ".open-next/worker.js"
 
-[env.production]
-vars = { REMOVEBG_API_KEY = "" }
+[assets]
+directory = ".open-next/assets"
+binding = "ASSETS"
 
-[[env.production.placement]]
-mode = "smart"
+[vars]
+REMOVEBG_API_KEY = ""
