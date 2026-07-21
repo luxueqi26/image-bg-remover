@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "node node_modules/@opennextjs/cloudflare/dist/cli/index.js build",
+    "build": "next build",
     "start": "next start",
     "cf:build": "npx @opennextjs/cloudflare build",
     "cf:deploy": "npx wrangler deploy"
