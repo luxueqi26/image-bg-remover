@@ -1,24 +1,25 @@
 {
-  "name": "image-background-remover",
+  "name": "image-bg-remover",
   "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "pages:build": "npx @cloudflare/next-on-pages",
-    "pages:deploy": "npx wrangler pages deploy .vercel/output/static"
+    "cf:build": "npx @opennextjs/cloudflare build",
+    "cf:deploy": "npx wrangler deploy"
   },
   "dependencies": {
-    "@cloudflare/next-on-pages": "^1.13.16",
-    "next": "^14.2.0",
-    "react": "^18.3.0",
-    "react-dom": "^18.3.0"
+    "next": "^15.5.18",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
   },
   "devDependencies": {
+    "@opennextjs/cloudflare": "^1.20.1",
     "@types/node": "^20.0.0",
     "autoprefixer": "^10.4.0",
     "postcss": "^8.4.0",
-    "tailwindcss": "^3.4.0"
+    "tailwindcss": "^3.4.0",
+    "wrangler": "^4.0.0"
   }
 }
