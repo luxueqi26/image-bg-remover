@@ -1,5 +1,5 @@
 name = "image-bg-remover"
-compatibility_date = "2025-07-21"
+compatibility_date = "2026-07-21"
 compatibility_flags = ["nodejs_compat"]
 main = ".open-next/worker.js"
 
