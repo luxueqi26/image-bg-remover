@@ -1,5 +1,5 @@
 import { verifyCode } from '@/lib/codes'
-import { findUserByIdentity, createUser, bindIdentity } from '@/lib/db'
+import { findUserByIdentity, findUserById, createUser, bindIdentity } from '@/lib/db'
 import { generateToken } from '@/lib/auth'
 
 function isValidPhone(phone) {
@@ -23,16 +23,15 @@ export async function POST(request) {
     }
 
     // 查找或创建用户
-    let identity = findUserByIdentity('phone', phone)
+    const identity = await findUserByIdentity('phone', phone)
     let user
     if (identity) {
       // 老用户，直接登录
-      const { findUserById } = await import('@/lib/db')
-      user = findUserById(identity.user_id)
+      user = await findUserById(identity.user_id)
     } else {
       // 新用户，自动注册
-      user = createUser()
-      bindIdentity(user._id, 'phone', phone)
+      user = await createUser()
+      await bindIdentity(user._id, 'phone', phone)
     }
 
     // 生成 JWT token
