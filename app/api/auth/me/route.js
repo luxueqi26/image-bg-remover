@@ -18,13 +18,13 @@ export async function GET(request) {
     return Response.json({ user: null })
   }
 
-  const user = findUserById(payload.user_id)
+  const user = await findUserById(payload.user_id)
   if (!user) {
     return Response.json({ user: null })
   }
 
   // 获取用户绑定的登录方式
-  const identities = getUserIdentities(user._id)
+  const identities = await getUserIdentities(user._id)
   const phoneIdentity = identities.find((i) => i.provider === 'phone')
   const wechatIdentity = identities.find((i) => i.provider === 'wechat')
 
