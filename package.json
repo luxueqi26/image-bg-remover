@@ -13,8 +13,10 @@
     "@cloudbase/node-sdk": "^3.18.3",
     "jsonwebtoken": "^9.0.2",
     "next": "^15.5.18",
+    "qrcode": "^1.5.4",
     "react": "^19.2.7",
-    "react-dom": "^19.2.7"
+    "react-dom": "^19.2.7",
+    "wechatpay-node-v3": "^2.1.8"
   },
   "devDependencies": {
     "@opennextjs/cloudflare": "^1.20.1",
