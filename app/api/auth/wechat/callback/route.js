@@ -1,4 +1,4 @@
-import { findUserByIdentity, createUser, bindIdentity, findUserById } from '@/lib/db'
+import { findUserByIdentity, createUser, bindIdentity, findUserById, updateUser } from '@/lib/db'
 import { generateToken } from '@/lib/auth'
 
 export async function GET(request) {
@@ -55,26 +55,24 @@ export async function GET(request) {
     const identifier = unionid || openid
 
     // 查找或创建用户
-    let identity = findUserByIdentity('wechat', identifier)
+    const identity = await findUserByIdentity('wechat', identifier)
     let user
     if (identity) {
       // 老用户，更新头像和昵称
-      user = findUserById(identity.user_id)
+      user = await findUserById(identity.user_id)
       if (wxUserInfo.nickname || wxUserInfo.headimgurl) {
-        const { updateUser } = await import('@/lib/db')
-        user = updateUser(user._id, {
+        user = await updateUser(user._id, {
           nickname: wxUserInfo.nickname || user.nickname,
           avatar: wxUserInfo.headimgurl || user.avatar,
         })
       }
     } else {
       // 新用户，自动注册
-      user = createUser(wxUserInfo.nickname)
+      user = await createUser(wxUserInfo.nickname)
       if (wxUserInfo.headimgurl) {
-        const { updateUser } = await import('@/lib/db')
-        user = updateUser(user._id, { avatar: wxUserInfo.headimgurl })
+        user = await updateUser(user._id, { avatar: wxUserInfo.headimgurl })
       }
-      bindIdentity(user._id, 'wechat', identifier)
+      await bindIdentity(user._id, 'wechat', identifier)
     }
 
     // 生成 JWT token
