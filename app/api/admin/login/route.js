@@ -1,3 +1,4 @@
+import { verifyAdminToken } from '@/lib/admin-auth'
 import crypto from 'crypto'
 
 /**
@@ -28,7 +29,8 @@ function makeToken(username) {
 
 export async function POST(request) {
   try {
-    const { username, password } = await request.json()
+    const body = await request.json()
+    const { username, password } = body
 
     if (!username || !password) {
       return Response.json({ error: '请输入账号和密码' }, { status: 400 })
@@ -36,7 +38,17 @@ export async function POST(request) {
 
     // 验证内置超级管理员（不查数据库，启动后立即可用）
     if (username !== ADMIN_USERNAME || password !== ADMIN_PASSWORD) {
-      return Response.json({ error: '账号或密码错误' }, { status: 401 })
+      return Response.json({
+        error: '账号或密码错误',
+        debug: {
+          inputUsername: username,
+          expectedUsername: ADMIN_USERNAME,
+          inputPasswordLength: String(password).length,
+          expectedPasswordLength: ADMIN_PASSWORD.length,
+          hasEnvUsername: !!process.env.ADMIN_USERNAME,
+          hasEnvPassword: !!process.env.ADMIN_PASSWORD,
+        }
+      }, { status: 401 })
     }
 
     const token = makeToken(username)
@@ -52,6 +64,13 @@ export async function POST(request) {
     })
   } catch (err) {
     console.error('Admin login error:', err)
-    return Response.json({ error: '登录失败' }, { status: 500 })
+    return Response.json({
+      error: '登录失败',
+      debug: {
+        errMsg: err.message,
+        errName: err.name,
+        errStack: (err.stack || '').slice(0, 300),
+      }
+    }, { status: 500 })
   }
 }

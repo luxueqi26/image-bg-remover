@@ -6,6 +6,7 @@ export default function AdminLogin() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [debugInfo, setDebugInfo] = useState(null)
   const [loading, setLoading] = useState(false)
 
   // 检查是否已登录
@@ -19,6 +20,7 @@ export default function AdminLogin() {
     e.preventDefault()
     setLoading(true)
     setError('')
+    setDebugInfo(null)
 
     try {
       const res = await fetch('/api/admin/login', {
@@ -28,7 +30,7 @@ export default function AdminLogin() {
       })
       const data = await res.json()
 
-      if (!res.ok) throw new Error(data.error || '登录失败')
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`)
 
       window.location.href = '/admin/dashboard'
     } catch (err) {
