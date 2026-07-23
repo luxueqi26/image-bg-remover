@@ -1,0 +1,16 @@
+node_modules/
+.next/
+.open-next/
+out/
+.env
+.env.local
+*.local
+.DS_Store
+certs/*.pem
+*.py
+*.txt
+*.zip
+*.jpg
+*.sh
+deploy.zip
+test.jpg

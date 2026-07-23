@@ -1,0 +1,29 @@
+{
+  "name": "image-bg-remover",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "cf:build": "npx @opennextjs/cloudflare build",
+    "cf:deploy": "npx wrangler deploy"
+  },
+  "dependencies": {
+    "@cloudbase/node-sdk": "^3.18.3",
+    "jsonwebtoken": "^9.0.2",
+    "next": "^15.5.18",
+    "qrcode": "^1.5.4",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "wechatpay-node-v3": "^2.1.8"
+  },
+  "devDependencies": {
+    "@opennextjs/cloudflare": "^1.20.1",
+    "@types/node": "^20.0.0",
+    "autoprefixer": "^10.4.0",
+    "postcss": "^8.4.0",
+    "tailwindcss": "^3.4.0",
+    "wrangler": "^4.0.0"
+  }
+}

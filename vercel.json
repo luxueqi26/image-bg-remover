@@ -1,0 +1,8 @@
+{
+  "buildCommand": "npm run build",
+  "installCommand": "npm install",
+  "framework": "nextjs",
+  "env": {
+    "REMOVEBG_API_KEY": "@removebg-api-key"
+  }
+}
