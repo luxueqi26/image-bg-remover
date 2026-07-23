@@ -9,9 +9,9 @@ export default function PayModal({ onClose, onSuccess }) {
   const [qrDataUrl, setQrDataUrl] = useState('')
   const [orderNo, setOrderNo] = useState('')
   const [error, setError] = useState('')
+  const [priceYuan, setPriceYuan] = useState('1.99')
   const [timeLeft, setTimeLeft] = useState(300) // 5分钟超时
   const pollingRef = useRef(null)
-  const canvasRef = useRef(null)
 
   // 下单
   useEffect(() => {
@@ -25,16 +25,18 @@ export default function PayModal({ onClose, onSuccess }) {
     setStep('loading')
     setError('')
     try {
+      // 不再前端传金额，由后端从 pricing 表读取
       const res = await fetch('/api/pay/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: 10 }), // 0.1元 = 10分（测试金额）
+        body: JSON.stringify({}),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || '创建订单失败')
 
       setCodeUrl(data.code_url)
       setOrderNo(data.out_trade_no)
+      if (data.amount_yuan) setPriceYuan(data.amount_yuan)
 
       // 生成二维码图片
       const qrUrl = await QRCode.toDataURL(data.code_url, {
@@ -122,7 +124,7 @@ export default function PayModal({ onClose, onSuccess }) {
                   <rect x="2" y="2" width="16" height="16" rx="3" fill="#07c160"/>
                   <path d="M6.5 8L9.5 11L13.5 7" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
-                <span className="text-lg font-bold text-gray-900">¥0.01</span>
+                <span className="text-lg font-bold text-gray-900">¥{priceYuan}</span>
               </div>
 
               {/* QR Code */}

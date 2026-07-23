@@ -22,11 +22,27 @@ export default function Home() {
   const [pendingFile, setPendingFile] = useState(null)
   const [freeUsesLeft, setFreeUsesLeft] = useState(0)
 
+  // 免费次数追踪
+  const [freeDaily, setFreeDaily] = useState(1)
+  const [priceYuan, setPriceYuan] = useState('1.99')
+
   // 页面加载
   useEffect(() => {
     checkLoginStatus()
     updateFreeUses()
+    loadPricing()
   }, [])
+
+  async function loadPricing() {
+    try {
+      const res = await fetch('/api/pricing')
+      const data = await res.json()
+      if (data.success) {
+        setFreeDaily(data.free_daily)
+        setPriceYuan(data.single_price_yuan)
+      }
+    } catch {}
+  }
 
   // 检查 URL 中是否有微信登录错误信息
   useEffect(() => {
@@ -65,8 +81,6 @@ export default function Home() {
 
   // === 免费次数追踪 ===
 
-  const FREE_DAILY = 1
-
   function getTodayKey() {
     const now = new Date()
     const y = now.getFullYear()
@@ -80,10 +94,10 @@ export default function Home() {
       const freeData = JSON.parse(localStorage.getItem('koutu_free') || '{}')
       const paidData = JSON.parse(localStorage.getItem('koutu_paid') || '{}')
       const today = getTodayKey()
-      const freeLeft = Math.max(0, FREE_DAILY - (freeData[today] || 0))
+      const freeLeft = Math.max(0, freeDaily - (freeData[today] || 0))
       const paidLeft = paidData[today] || 0
       setFreeUsesLeft(freeLeft + paidLeft)
-    } catch { setFreeUsesLeft(FREE_DAILY) }
+    } catch { setFreeUsesLeft(freeDaily) }
   }
 
   function consumeOneFree() {
@@ -138,7 +152,7 @@ export default function Home() {
     const paidUsed = paidData[today] || 0
 
     // 先用免费次数，免费用完后用付费次数
-    if (freeUsed < FREE_DAILY) {
+    if (freeUsed < freeDaily) {
       consumeOneFree()
       startProcessing(file)
     } else if (paidUsed > 0) {
@@ -308,7 +322,7 @@ export default function Home() {
               <p className="text-sm text-gray-500">或点击选择文件</p>
               <p className="text-xs text-gray-400 mt-1">支持 JPG / PNG / WebP，最大 10MB</p>
               <p className="text-xs mt-2 font-bold" style={{ color: freeUsesLeft > 0 ? '#07c160' : '#e24b4a' }}>
-                {freeUsesLeft > 0 ? `今日剩余 ${freeUsesLeft} 次使用` : '今日免费次数已用完，点击扫码支付 ¥0.01 解锁'}
+                {freeUsesLeft > 0 ? `今日剩余 ${freeUsesLeft} 次使用` : `今日免费次数已用完，点击扫码支付 ¥${priceYuan} 解锁`}
               </p>
             </div>
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files[0]; if (f) processFile(f) }} />
@@ -318,7 +332,7 @@ export default function Home() {
               {[
                 { title: '一键上传', desc: '拖拽或点击即可上传图片', c: '#4263eb' },
                 { title: 'AI 自动处理', desc: '智能识别前景，精准去背景', c: '#2f9e44' },
-                { title: '即付即用', desc: '每天1次免费，¥0.01继续使用', c: '#e24b4a' },
+                { title: '即付即用', desc: `每天${freeDaily}次免费，¥${priceYuan}继续使用`, c: '#e24b4a' },
               ].map((item, i) => (
                 <div key={i} className="text-center p-6 rounded-xl bg-white border border-gray-200">
                   <svg width="28" height="28" viewBox="0 0 32 32" fill="none" style={{ margin: '0 auto 12px', display: 'block' }}>

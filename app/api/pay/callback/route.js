@@ -1,9 +1,9 @@
 import { verifyAndDecryptCallback } from '@/lib/pay'
-import crypto from 'crypto'
+import { updateOrderStatus } from '@/lib/db'
 
 /**
  * 微信支付回调通知
- * 验证签名 -> 解密数据 -> 记录支付成功
+ * 验证签名 -> 解密数据 -> 更新订单状态
  */
 export async function POST(request) {
   try {
@@ -29,13 +29,17 @@ export async function POST(request) {
     const { out_trade_no, trade_state, transaction_id } = decrypted
 
     if (trade_state === 'SUCCESS') {
-      // 记录支付成功
+      // 更新数据库中的订单状态
+      await updateOrderStatus(out_trade_no, 'paid')
+
+      // 内存缓存（兼容本地开发的轮询查询）
       if (!globalThis.__paidOrders) globalThis.__paidOrders = new Map()
       globalThis.__paidOrders.set(out_trade_no, {
         out_trade_no,
         transaction_id,
         paid_at: new Date().toISOString(),
       })
+
       console.log(`[Payment] Order ${out_trade_no} paid successfully, txn: ${transaction_id}`)
     }
 
