@@ -1,19 +1,24 @@
-import { findAdmin, createAdmin } from '@/lib/db'
 import crypto from 'crypto'
 
 /**
  * 管理员登录 API
  * POST /api/admin/login  { username, password }
  * 返回 JWT token（存 HttpOnly cookie）
+ *
+ * 内置超级管理员：通过环境变量 ADMIN_USERNAME / ADMIN_PASSWORD 配置
+ * 默认值：admin / admin123（生产环境必须改！）
  */
 
 const ADMIN_JWT_SECRET = process.env.ADMIN_JWT_SECRET || 'admin_koutu_secret_2026'
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin'
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123'
+const ADMIN_USER_ID = process.env.ADMIN_USER_ID || 'admin_root'
 
-function makeToken(admin) {
+function makeToken(username) {
   const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url')
   const payload = Buffer.from(JSON.stringify({
-    admin_id: admin._id,
-    username: admin.username,
+    admin_id: ADMIN_USER_ID,
+    username,
     role: 'admin',
     exp: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7天
   })).toString('base64url')
@@ -29,29 +34,17 @@ export async function POST(request) {
       return Response.json({ error: '请输入账号和密码' }, { status: 400 })
     }
 
-    let admin = await findAdmin(username)
-
-    // 首次登录：如果没有管理员，自动创建默认管理员
-    if (!admin && username === 'admin' && password === 'admin123') {
-      const password_hash = crypto.createHash('sha256').update(password).digest('hex')
-      admin = await createAdmin({ username, password_hash })
+    // 验证内置超级管理员（不查数据库，启动后立即可用）
+    if (username !== ADMIN_USERNAME || password !== ADMIN_PASSWORD) {
+      return Response.json({ error: '账号或密码错误' }, { status: 401 })
     }
 
-    if (!admin) {
-      return Response.json({ error: '账号不存在' }, { status: 401 })
-    }
-
-    const password_hash = crypto.createHash('sha256').update(password).digest('hex')
-    if (admin.password_hash !== password_hash) {
-      return Response.json({ error: '密码错误' }, { status: 401 })
-    }
-
-    const token = makeToken(admin)
+    const token = makeToken(username)
 
     return Response.json({
       success: true,
       token,
-      admin: { username: admin.username },
+      admin: { username },
     }, {
       headers: {
         'Set-Cookie': `admin_token=${token}; Path=/; HttpOnly; Max-Age=${7 * 24 * 60 * 60}; SameSite=Lax`
