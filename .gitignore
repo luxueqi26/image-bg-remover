@@ -6,3 +6,4 @@ out/
 .env.local
 *.local
 .DS_Store
+certs/*.pem
