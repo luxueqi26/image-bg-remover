@@ -10,6 +10,7 @@
     "cf:deploy": "npx wrangler deploy"
   },
   "dependencies": {
+    "@cloudbase/node-sdk": "^3.18.3",
     "jsonwebtoken": "^9.0.2",
     "next": "^15.5.18",
     "react": "^19.2.7",
