@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import LoginModal from '@/components/LoginModal'
+import PayModal from '@/components/PayModal'
 
 export default function Home() {
   const [step, setStep] = useState('upload')
@@ -16,9 +17,15 @@ export default function Home() {
   const [showLogin, setShowLogin] = useState(false)
   const [showUserMenu, setShowUserMenu] = useState(false)
 
-  // 页面加载时检查登录状态
+  // 支付状态
+  const [showPay, setShowPay] = useState(false)
+  const [pendingFile, setPendingFile] = useState(null)
+  const [freeUsesLeft, setFreeUsesLeft] = useState(0)
+
+  // 页面加载
   useEffect(() => {
     checkLoginStatus()
+    updateFreeUses()
   }, [])
 
   // 检查 URL 中是否有微信登录错误信息
@@ -56,7 +63,47 @@ export default function Home() {
     }
   }, [originalUrl, resultUrl])
 
-  function processFile(file) {
+  // === 免费次数追踪 ===
+
+  const FREE_DAILY = 1
+
+  function getTodayKey() {
+    const now = new Date()
+    const y = now.getFullYear()
+    const m = String(now.getMonth() + 1).padStart(2, '0')
+    const d = String(now.getDate()).padStart(2, '0')
+    return `${y}-${m}-${d}`
+  }
+
+  function updateFreeUses() {
+    try {
+      const data = JSON.parse(localStorage.getItem('koutu_free') || '{}')
+      const today = getTodayKey()
+      setFreeUsesLeft(Math.max(0, FREE_DAILY - (data[today] || 0)))
+    } catch { setFreeUsesLeft(FREE_DAILY) }
+  }
+
+  function consumeOneFree() {
+    try {
+      const data = JSON.parse(localStorage.getItem('koutu_free') || '{}')
+      const today = getTodayKey()
+      data[today] = (data[today] || 0) + 1
+      localStorage.setItem('koutu_free', JSON.stringify(data))
+      setFreeUsesLeft(Math.max(0, FREE_DAILY - data[today]))
+    } catch {}
+  }
+
+  function handlePaySuccess() {
+    setShowPay(false)
+    updateFreeUses()
+    if (pendingFile) {
+      const f = pendingFile
+      setPendingFile(null)
+      startProcessing(f)
+    }
+  }
+
+  function startProcessing(file) {
     if (!file.type.startsWith('image/')) {
       setErrorMessage('请上传图片文件（JPG / PNG / WebP）')
       setStep('error')
@@ -70,6 +117,18 @@ export default function Home() {
     setOriginalUrl(URL.createObjectURL(file))
     setStep('processing')
     callRemoveBg(file)
+  }
+
+  function processFile(file) {
+    const data = JSON.parse(localStorage.getItem('koutu_free') || '{}')
+    const today = getTodayKey()
+    if ((data[today] || 0) >= FREE_DAILY) {
+      setPendingFile(file)
+      setShowPay(true)
+      return
+    }
+    consumeOneFree()
+    startProcessing(file)
   }
 
   async function callRemoveBg(file) {
@@ -108,6 +167,7 @@ export default function Home() {
     setOriginalUrl('')
     setResultUrl('')
     setErrorMessage('')
+    updateFreeUses()
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
@@ -191,6 +251,14 @@ export default function Home() {
         />
       )}
 
+      {/* Pay Modal */}
+      {showPay && (
+        <PayModal
+          onClose={() => { setShowPay(false); setPendingFile(null) }}
+          onSuccess={handlePaySuccess}
+        />
+      )}
+
       {/* Main content */}
       <main className="flex-1 max-w-4xl w-full mx-auto px-6 py-12">
         {step === 'upload' && (
@@ -217,6 +285,9 @@ export default function Home() {
               <h2 className="text-xl font-bold text-gray-900">拖拽图片到这里</h2>
               <p className="text-sm text-gray-500">或点击选择文件</p>
               <p className="text-xs text-gray-400 mt-1">支持 JPG / PNG / WebP，最大 10MB</p>
+              <p className="text-xs mt-2 font-bold" style={{ color: freeUsesLeft > 0 ? '#07c160' : '#e24b4a' }}>
+                {freeUsesLeft > 0 ? `今日剩余免费 ${freeUsesLeft} 次` : '今日免费次数已用完，点击扫码支付 ¥1.99 解锁'}
+              </p>
             </div>
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files[0]; if (f) processFile(f) }} />
 
@@ -225,7 +296,7 @@ export default function Home() {
               {[
                 { title: '一键上传', desc: '拖拽或点击即可上传图片', c: '#4263eb' },
                 { title: 'AI 自动处理', desc: '智能识别前景，精准去背景', c: '#2f9e44' },
-                { title: '免费下载', desc: '导出透明背景 PNG', c: '#4263eb' },
+                { title: '即付即用', desc: '每天1次免费，¥1.99继续使用', c: '#e24b4a' },
               ].map((item, i) => (
                 <div key={i} className="text-center p-6 rounded-xl bg-white border border-gray-200">
                   <svg width="28" height="28" viewBox="0 0 32 32" fill="none" style={{ margin: '0 auto 12px', display: 'block' }}>
