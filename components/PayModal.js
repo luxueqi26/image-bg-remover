@@ -28,7 +28,7 @@ export default function PayModal({ onClose, onSuccess }) {
       const res = await fetch('/api/pay/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: 199 }), // 1.99元 = 199分
+        body: JSON.stringify({ amount: 10 }), // 0.1元 = 10分（测试金额）
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || '创建订单失败')
@@ -122,7 +122,7 @@ export default function PayModal({ onClose, onSuccess }) {
                   <rect x="2" y="2" width="16" height="16" rx="3" fill="#07c160"/>
                   <path d="M6.5 8L9.5 11L13.5 7" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
-                <span className="text-lg font-bold text-gray-900">¥1.99</span>
+                <span className="text-lg font-bold text-gray-900">¥0.01</span>
               </div>
 
               {/* QR Code */}

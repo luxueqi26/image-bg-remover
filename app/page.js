@@ -77,9 +77,12 @@ export default function Home() {
 
   function updateFreeUses() {
     try {
-      const data = JSON.parse(localStorage.getItem('koutu_free') || '{}')
+      const freeData = JSON.parse(localStorage.getItem('koutu_free') || '{}')
+      const paidData = JSON.parse(localStorage.getItem('koutu_paid') || '{}')
       const today = getTodayKey()
-      setFreeUsesLeft(Math.max(0, FREE_DAILY - (data[today] || 0)))
+      const freeLeft = Math.max(0, FREE_DAILY - (freeData[today] || 0))
+      const paidLeft = paidData[today] || 0
+      setFreeUsesLeft(freeLeft + paidLeft)
     } catch { setFreeUsesLeft(FREE_DAILY) }
   }
 
@@ -95,7 +98,15 @@ export default function Home() {
 
   function handlePaySuccess() {
     setShowPay(false)
+    // 支付成功：给用户增加1次付费使用次数（存在 localStorage 的 paid 池里）
+    try {
+      const data = JSON.parse(localStorage.getItem('koutu_paid') || '{}')
+      const today = getTodayKey()
+      data[today] = (data[today] || 0) + 1
+      localStorage.setItem('koutu_paid', JSON.stringify(data))
+    } catch {}
     updateFreeUses()
+    // 继续处理之前待处理的图片
     if (pendingFile) {
       const f = pendingFile
       setPendingFile(null)
@@ -120,15 +131,26 @@ export default function Home() {
   }
 
   function processFile(file) {
-    const data = JSON.parse(localStorage.getItem('koutu_free') || '{}')
+    const freeData = JSON.parse(localStorage.getItem('koutu_free') || '{}')
+    const paidData = JSON.parse(localStorage.getItem('koutu_paid') || '{}')
     const today = getTodayKey()
-    if ((data[today] || 0) >= FREE_DAILY) {
+    const freeUsed = freeData[today] || 0
+    const paidUsed = paidData[today] || 0
+
+    // 先用免费次数，免费用完后用付费次数
+    if (freeUsed < FREE_DAILY) {
+      consumeOneFree()
+      startProcessing(file)
+    } else if (paidUsed > 0) {
+      // 消耗1次付费次数
+      paidData[today] = paidUsed - 1
+      localStorage.setItem('koutu_paid', JSON.stringify(paidData))
+      startProcessing(file)
+    } else {
+      // 没有免费次数也没有付费次数，弹出支付
       setPendingFile(file)
       setShowPay(true)
-      return
     }
-    consumeOneFree()
-    startProcessing(file)
   }
 
   async function callRemoveBg(file) {
@@ -286,7 +308,7 @@ export default function Home() {
               <p className="text-sm text-gray-500">或点击选择文件</p>
               <p className="text-xs text-gray-400 mt-1">支持 JPG / PNG / WebP，最大 10MB</p>
               <p className="text-xs mt-2 font-bold" style={{ color: freeUsesLeft > 0 ? '#07c160' : '#e24b4a' }}>
-                {freeUsesLeft > 0 ? `今日剩余免费 ${freeUsesLeft} 次` : '今日免费次数已用完，点击扫码支付 ¥1.99 解锁'}
+                {freeUsesLeft > 0 ? `今日剩余 ${freeUsesLeft} 次使用` : '今日免费次数已用完，点击扫码支付 ¥0.01 解锁'}
               </p>
             </div>
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files[0]; if (f) processFile(f) }} />
@@ -296,7 +318,7 @@ export default function Home() {
               {[
                 { title: '一键上传', desc: '拖拽或点击即可上传图片', c: '#4263eb' },
                 { title: 'AI 自动处理', desc: '智能识别前景，精准去背景', c: '#2f9e44' },
-                { title: '即付即用', desc: '每天1次免费，¥1.99继续使用', c: '#e24b4a' },
+                { title: '即付即用', desc: '每天1次免费，¥0.01继续使用', c: '#e24b4a' },
               ].map((item, i) => (
                 <div key={i} className="text-center p-6 rounded-xl bg-white border border-gray-200">
                   <svg width="28" height="28" viewBox="0 0 32 32" fill="none" style={{ margin: '0 auto 12px', display: 'block' }}>

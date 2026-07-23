@@ -7,3 +7,10 @@ out/
 *.local
 .DS_Store
 certs/*.pem
+*.py
+*.txt
+*.zip
+*.jpg
+*.sh
+deploy.zip
+test.jpg
