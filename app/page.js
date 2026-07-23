@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import LoginModal from '@/components/LoginModal'
 
 export default function Home() {
   const [step, setStep] = useState('upload')
@@ -9,6 +10,44 @@ export default function Home() {
   const [resultUrl, setResultUrl] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
   const fileInputRef = useRef(null)
+
+  // 登录状态
+  const [user, setUser] = useState(null)
+  const [showLogin, setShowLogin] = useState(false)
+  const [showUserMenu, setShowUserMenu] = useState(false)
+
+  // 页面加载时检查登录状态
+  useEffect(() => {
+    checkLoginStatus()
+  }, [])
+
+  // 检查 URL 中是否有微信登录错误信息
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const loginError = params.get('login_error')
+    if (loginError) {
+      setErrorMessage(loginError)
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+  }, [])
+
+  async function checkLoginStatus() {
+    try {
+      const res = await fetch('/api/auth/me')
+      const data = await res.json()
+      if (data.user) {
+        setUser(data.user)
+      }
+    } catch (err) {
+      // 忽略
+    }
+  }
+
+  async function handleLogout() {
+    await fetch('/api/auth/logout', { method: 'POST' })
+    setUser(null)
+    setShowUserMenu(false)
+  }
 
   useEffect(() => {
     return () => {
@@ -86,9 +125,71 @@ export default function Home() {
             </svg>
             <span className="text-xl font-bold text-gray-900">AI 抠图</span>
           </div>
-          <p className="text-sm text-gray-400">一键去除图片背景</p>
+
+          {/* 右侧：登录入口 / 用户信息 */}
+          {user ? (
+            <div className="relative">
+              <button
+                onClick={() => setShowUserMenu(!showUserMenu)}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                {user.avatar ? (
+                  <img src={user.avatar} alt="" className="w-8 h-8 rounded-full" />
+                ) : (
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white" style={{ background: PRIMARY }}>
+                    {user.nickname.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <span className="text-sm font-bold text-gray-700 max-w-20 truncate">{user.nickname}</span>
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path d="M3 5L7 9L11 5" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+
+              {showUserMenu && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setShowUserMenu(false)} />
+                  <div className="absolute right-0 top-full mt-1 w-56 bg-white border border-gray-200 rounded-xl shadow-lg z-20 overflow-hidden">
+                    <div className="px-4 py-3 border-b border-gray-100">
+                      <p className="text-sm font-bold text-gray-900 truncate">{user.nickname}</p>
+                      {user.phone && <p className="text-xs text-gray-400 mt-0.5">{user.phone}</p>}
+                      {user.wechat_bound && <p className="text-xs text-green-500 mt-0.5">已绑定微信</p>}
+                    </div>
+                    <button
+                      onClick={handleLogout}
+                      className="w-full px-4 py-3 text-left text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+                    >
+                      退出登录
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center gap-3">
+              <p className="text-sm text-gray-400 hidden sm:block">一键去除图片背景</p>
+              <button
+                onClick={() => setShowLogin(true)}
+                className="px-4 py-1.5 rounded-lg text-sm font-bold text-white hover:opacity-90 transition-opacity"
+                style={{ background: PRIMARY }}
+              >
+                登录 / 注册
+              </button>
+            </div>
+          )}
         </div>
       </header>
+
+      {/* Login Modal */}
+      {showLogin && (
+        <LoginModal
+          onClose={() => setShowLogin(false)}
+          onSuccess={(u) => {
+            setUser(u)
+            setShowLogin(false)
+          }}
+        />
+      )}
 
       {/* Main content */}
       <main className="flex-1 max-w-4xl w-full mx-auto px-6 py-12">
