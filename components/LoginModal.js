@@ -228,7 +228,15 @@ export default function LoginModal({ onClose, onSuccess }) {
 
               <div className="w-full pt-4 border-t border-gray-100">
                 <p className="text-xs text-gray-400 text-center">
-                  微信登录需要完成微信开放平台企业认证
+                  扫码登录需在微信开放平台注册网站应用<br/>
+                  <a
+                    href="https://open.weixin.qq.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-500 hover:underline"
+                  >
+                    前往微信开放平台注册 →
+                  </a>
                 </p>
               </div>
             </div>
